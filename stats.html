@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% block title %}Statistics{% endblock %}
+{% block content %}
+<div class="topbar">
+  <div class="tb-left">
+    <h1>Statistical Analysis</h1>
+    <p>Descriptive Stats · Confidence Intervals · Probability Distribution · Heatmaps</p>
+  </div>
+  <div class="tb-badge">Tools Used: <span>4 Methods</span></div>
+</div>
+
+<div class="slbl">1 — Descriptive Statistics</div>
+<div class="card g1">
+  <div class="ch">Key Variable Summary</div>
+  <div class="gdesc">Summarizes central tendency and spread of all numeric variables. Mean shows average, Std shows how spread out values are, Min/Max show the range.</div>
+  <table class="tbl">
+    <thead><tr><th>Statistic</th><th>Price (USD)</th><th>Min Price</th><th>Max Price</th><th>Rating</th><th>Reviews</th></tr></thead>
+    <tbody>
+      {% for r in desc_data %}
+      <tr>
+        <td style="color:var(--acc);font-weight:600;">{{r.Statistic}}</td>
+        <td class="num">{{r.price_usd}}</td><td class="num">{{r.min_price}}</td>
+        <td class="num">{{r.max_price}}</td><td class="num">{{r.client_average_rating}}</td>
+        <td class="num">{{r.client_review_count}}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<div class="slbl">2 — Confidence Intervals (95%)</div>
+<div class="g2">
+  <div class="card">
+    <div class="ch">CI Chart — Avg Price by Country</div>
+    <div class="gdesc">Error bars show the 95% confidence interval for average price per country. Wider bars mean more variability in that country's pricing.</div>
+    <div id="fig_ci" style="height:290px"></div>
+  </div>
+  <div class="card">
+    <div class="ch">CI Table — Numeric Values</div>
+    <div class="gdesc">Exact lower and upper bounds of 95% confidence intervals. We are 95% confident the true mean lies between CI Lower and CI Upper.</div>
+    <table class="tbl">
+      <thead><tr><th>Country</th><th>N</th><th>Mean USD</th><th>CI Lower</th><th>CI Upper</th></tr></thead>
+      <tbody>
+        {% for r in ci_table %}
+        <tr>
+          <td>{{r.Country}}</td><td style="color:var(--mut)">{{r.N}}</td>
+          <td class="num">${{r['Mean (USD)']}}</td><td>${{r['CI Lower']}}</td><td>${{r['CI Upper']}}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="slbl">3 — Probability Distribution</div>
+<div class="card g1">
+  <div class="ch">Earnings — Normal Distribution Fit</div>
+  <div class="dpills">
+    <div class="dpill">Mean (μ): <span>${{mu}}</span></div>
+    <div class="dpill">Std Dev (σ): <span>${{sigma}}</span></div>
+    <div class="dpill">Type: <span>Normal (Gaussian)</span></div>
+  </div>
+  <div class="gdesc">The histogram shows actual price distribution. The orange curve is the fitted Normal Distribution. If bars follow the curve closely, data is normally distributed.</div>
+  <div id="fig_dist" style="height:270px"></div>
+</div>
+
+<div class="slbl">4 — Graphical Representation</div>
+<div class="g2">
+  <div class="card">
+    <div class="ch">Heatmap — Avg Price by Country × Rate Type</div>
+    <div class="gdesc">Darker blue = higher average price. Compares Fixed vs Hourly pricing across top 8 countries simultaneously.</div>
+    <div id="fig_heat" style="height:290px"></div>
+  </div>
+  <div class="card">
+    <div class="ch">Boxplot — Fixed vs Hourly Price Spread</div>
+    <div class="gdesc">Box shows 25th–75th percentile range. The line inside is median. Dots outside are outliers — unusually high or low priced jobs.</div>
+    <div id="fig_box" style="height:290px"></div>
+  </div>
+</div>
+
+<script>
+const L={paper_bgcolor:'rgba(0,0,0,0)',plot_bgcolor:'rgba(0,0,0,0)',font:{color:'#eef2ff',family:'Inter'},margin:{t:10,b:55,l:55,r:10}};
+Plotly.newPlot('fig_ci',  {{fig_ci|safe}}.data,  Object.assign({},{{fig_ci|safe}}.layout,  L));
+Plotly.newPlot('fig_dist',{{fig_dist|safe}}.data, Object.assign({},{{fig_dist|safe}}.layout,L));
+Plotly.newPlot('fig_heat',{{fig_heat|safe}}.data, Object.assign({},{{fig_heat|safe}}.layout,{paper_bgcolor:'rgba(0,0,0,0)',font:{color:'#eef2ff'},margin:{t:10,b:10,l:130,r:10}}));
+Plotly.newPlot('fig_box', {{fig_box|safe}}.data,  Object.assign({},{{fig_box|safe}}.layout, L,{showlegend:false,margin:{t:10,b:45,l:55,r:10}}));
+</script>
+{% endblock %}
