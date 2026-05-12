@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+<div class="topbar">
+  <div class="tb-left">
+    <h1>Freelancer Jobs Dashboard</h1>
+    <p>Real-world analysis of 9,000+ global freelancer job postings — Kaggle Dataset</p>
+  </div>
+  <div class="tb-badge">Source: Kaggle &nbsp;|&nbsp; <span>Live Analysis</span></div>
+</div>
+
+<div class="kpi-grid">
+  <div class="kpi b"><div class="kpi-ic">📋</div><div class="kpi-lbl">Total Postings</div><div class="kpi-val">{{ total }}</div></div>
+  <div class="kpi g"><div class="kpi-ic">💵</div><div class="kpi-lbl">Avg Price (USD)</div><div class="kpi-val">${{ avg_price }}</div></div>
+  <div class="kpi o"><div class="kpi-ic">⭐</div><div class="kpi-lbl">Avg Client Rating</div><div class="kpi-val">{{ avg_rating }}</div></div>
+  <div class="kpi p"><div class="kpi-ic">🌍</div><div class="kpi-lbl">Countries</div><div class="kpi-val">{{ countries }}</div></div>
+</div>
+
+<div class="slbl">Job Distribution</div>
+<div class="g2">
+  <div class="card">
+    <div class="ch">Top 10 Countries by Job Postings</div>
+    <div class="gdesc">Shows which countries have the highest number of freelancer job postings. USA, UK, and Canada typically dominate.</div>
+    <div id="c1" style="height:270px"></div>
+  </div>
+  <div class="card">
+    <div class="ch">Fixed vs Hourly Rate Distribution</div>
+    <div class="gdesc">Breakdown of job contract types. Fixed-price projects are more common than hourly engagements in freelancing.</div>
+    <div id="c2" style="height:270px"></div>
+  </div>
+</div>
+
+<div class="slbl">Pricing Analysis</div>
+<div class="g2">
+  <div class="card">
+    <div class="ch">Avg Job Price (USD) — Top 10 Countries</div>
+    <div class="gdesc">Average earnings per job posting across top countries. Higher-rated countries often command premium pricing.</div>
+    <div id="c3" style="height:270px"></div>
+  </div>
+  <div class="card">
+    <div class="ch">Client Rating vs Job Price (USD)</div>
+    <div class="gdesc">Scatter plot showing relationship between client reputation (rating) and the price they pay per job.</div>
+    <div id="c4" style="height:270px"></div>
+  </div>
+</div>
+
+<script>
+const L={paper_bgcolor:'rgba(0,0,0,0)',plot_bgcolor:'rgba(0,0,0,0)',font:{color:'#eef2ff',family:'Inter'},margin:{t:10,b:55,l:50,r:10}};
+Plotly.newPlot('c1',{{chart1|safe}}.data,Object.assign({},{{chart1|safe}}.layout,L,{coloraxis:{showscale:false}}));
+Plotly.newPlot('c2',{{chart2|safe}}.data,Object.assign({},{{chart2|safe}}.layout,{paper_bgcolor:'rgba(0,0,0,0)',font:{color:'#eef2ff'},margin:{t:10,b:10,l:10,r:10}}));
+Plotly.newPlot('c3',{{chart3|safe}}.data,Object.assign({},{{chart3|safe}}.layout,{paper_bgcolor:'rgba(0,0,0,0)',plot_bgcolor:'rgba(0,0,0,0)',font:{color:'#eef2ff'},margin:{t:10,b:10,l:130,r:10},coloraxis:{showscale:false}}));
+Plotly.newPlot('c4',{{chart4|safe}}.data,Object.assign({},{{chart4|safe}}.layout,L));
+</script>
+{% endblock %}
