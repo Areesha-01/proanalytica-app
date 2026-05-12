@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+  <title>ProAnalytica — {% block title %}{% endblock %}</title>
+  <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --bg:#060c18;--side:#09111f;--surf:#0f1c2e;--surf2:#172236;
+      --bdr:#1c2e45;--acc:#4f8ef7;--grn:#22d3a0;--gld:#f5a623;--pur:#a78bfa;
+      --txt:#eef2ff;--mut:#5d7a9a;--sw:230px;
+    }
+    *{margin:0;padding:0;box-sizing:border-box;}
+    body{background:var(--bg);color:var(--txt);font-family:'Inter',sans-serif;display:flex;min-height:100vh;font-size:14px;}
+
+    /* SIDEBAR */
+    aside{width:var(--sw);background:var(--side);border-right:1px solid var(--bdr);
+      display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;z-index:99;}
+    .sb-top{padding:1.5rem 1.2rem 1rem;flex:1;}
+    .logo-row{display:flex;align-items:center;gap:10px;margin-bottom:2.2rem;}
+    .logo-box{width:36px;height:36px;border-radius:9px;
+      background:linear-gradient(135deg,#1d4ed8,#4f8ef7);
+      display:flex;align-items:center;justify-content:center;
+      font-family:'Syne',sans-serif;font-weight:800;font-size:12px;color:#fff;
+      box-shadow:0 4px 14px rgba(79,142,247,.45);flex-shrink:0;}
+    .logo-name{font-family:'Syne',sans-serif;font-weight:800;font-size:16px;}
+    .logo-name span{color:var(--acc);}
+    .nav-lbl{font-size:10px;color:var(--mut);text-transform:uppercase;
+      letter-spacing:1.2px;font-weight:600;padding:0 .8rem;margin-bottom:.4rem;}
+    .nav-links{display:flex;flex-direction:column;gap:2px;}
+    .nav-links a{display:flex;align-items:center;gap:9px;padding:9px 11px;
+      border-radius:9px;text-decoration:none;color:var(--mut);font-size:13.5px;
+      font-weight:500;transition:all .15s;}
+    .nav-links a:hover{background:var(--surf);color:var(--txt);}
+    .nav-links a.active{background:rgba(79,142,247,.13);color:var(--acc);
+      border:1px solid rgba(79,142,247,.22);}
+    .nav-links a .ic{font-size:15px;width:18px;text-align:center;}
+    .sb-bot{padding:1rem 1.2rem;border-top:1px solid var(--bdr);}
+    .team-card{background:var(--surf2);border:1px solid var(--bdr);border-radius:10px;padding:.9rem;}
+    .team-title{font-family:'Syne',sans-serif;font-size:13px;font-weight:800;color:var(--acc);margin-bottom:5px;}
+    .team-list{font-size:11.5px;color:var(--mut);line-height:1.8;}
+
+    /* MAIN */
+    main{margin-left:var(--sw);flex:1;padding:1.8rem 2rem 3rem;}
+
+    /* TOPBAR */
+    .topbar{display:flex;align-items:flex-start;justify-content:space-between;
+      margin-bottom:1.8rem;padding-bottom:1.2rem;border-bottom:1px solid var(--bdr);}
+    .tb-left h1{font-family:'Syne',sans-serif;font-size:1.55rem;font-weight:800;line-height:1.2;}
+    .tb-left p{color:var(--mut);font-size:13px;margin-top:4px;}
+    .tb-badge{background:var(--surf);border:1px solid var(--bdr);padding:5px 13px;
+      border-radius:20px;font-size:12px;color:var(--mut);white-space:nowrap;margin-top:4px;}
+    .tb-badge span{color:var(--grn);font-weight:600;}
+
+    /* KPI */
+    .kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:.9rem;margin-bottom:1.6rem;}
+    .kpi{background:var(--surf);border:1px solid var(--bdr);border-radius:13px;
+      padding:1.1rem 1.3rem;position:relative;overflow:hidden;transition:border-color .2s;}
+    .kpi:hover{border-color:var(--acc);}
+    .kpi-ic{font-size:18px;margin-bottom:.3rem;}
+    .kpi-lbl{font-size:10.5px;color:var(--mut);text-transform:uppercase;letter-spacing:.9px;font-weight:600;}
+    .kpi-val{font-family:'Syne',sans-serif;font-size:1.55rem;font-weight:800;margin-top:3px;}
+    .kpi.b .kpi-val{color:var(--acc);} .kpi.g .kpi-val{color:var(--grn);}
+    .kpi.o .kpi-val{color:var(--gld);} .kpi.p .kpi-val{color:var(--pur);}
+    .kpi::after{content:'';position:absolute;bottom:0;left:0;right:0;height:3px;}
+    .kpi.b::after{background:var(--acc);} .kpi.g::after{background:var(--grn);}
+    .kpi.o::after{background:var(--gld);} .kpi.p::after{background:var(--pur);}
+
+    /* SECTION LABEL */
+    .slbl{display:flex;align-items:center;gap:8px;font-size:10.5px;color:var(--mut);
+      text-transform:uppercase;letter-spacing:1px;font-weight:600;
+      margin-bottom:.8rem;margin-top:.3rem;}
+    .slbl::after{content:'';flex:1;height:1px;background:var(--bdr);}
+
+    /* CARD */
+    .card{background:var(--surf);border:1px solid var(--bdr);border-radius:13px;padding:1.2rem;}
+    .ch{display:flex;align-items:center;gap:7px;font-family:'Syne',sans-serif;
+      font-size:11.5px;font-weight:700;color:var(--mut);text-transform:uppercase;
+      letter-spacing:.8px;margin-bottom:.5rem;}
+    .ch::before{content:'';width:3px;height:13px;background:var(--acc);border-radius:2px;flex-shrink:0;}
+    /* Graph description */
+    .gdesc{font-size:12px;color:var(--mut);margin-bottom:.9rem;line-height:1.5;
+      padding:.5rem .8rem;background:var(--surf2);border-radius:7px;
+      border-left:2px solid var(--acc);}
+
+    /* GRID */
+    .g2{display:grid;grid-template-columns:1fr 1fr;gap:1.1rem;margin-bottom:1.1rem;}
+    .g1{margin-bottom:1.1rem;}
+
+    /* TABLE */
+    .tbl{width:100%;border-collapse:collapse;font-size:12.5px;}
+    .tbl th{background:var(--surf2);color:var(--acc);padding:9px 13px;text-align:left;
+      font-family:'Syne',sans-serif;font-size:10.5px;letter-spacing:.7px;border-bottom:1px solid var(--bdr);}
+    .tbl td{padding:8px 13px;border-bottom:1px solid var(--bdr);}
+    .tbl tr:last-child td{border-bottom:none;}
+    .tbl tr:hover td{background:rgba(79,142,247,.04);}
+    .num{color:var(--grn);font-weight:600;}
+
+    /* FORM */
+    .fg{display:flex;flex-direction:column;gap:5px;}
+    .fg label{font-size:10.5px;color:var(--mut);text-transform:uppercase;letter-spacing:.7px;font-weight:600;}
+    .fg select,.fg input{background:var(--surf2);border:1px solid var(--bdr);
+      color:var(--txt);padding:9px 12px;border-radius:8px;
+      font-family:'Inter',sans-serif;font-size:13.5px;outline:none;transition:border .15s;}
+    .fg select:focus,.fg input:focus{border-color:var(--acc);}
+    .fgrid{display:grid;grid-template-columns:1fr 1fr;gap:.9rem;}
+    .btn{width:100%;margin-top:1rem;padding:12px;
+      background:linear-gradient(135deg,#1d4ed8,#4f8ef7);
+      color:#fff;border:none;border-radius:9px;
+      font-family:'Syne',sans-serif;font-size:14px;font-weight:700;
+      cursor:pointer;transition:opacity .15s;box-shadow:0 4px 16px rgba(79,142,247,.4);}
+    .btn:hover{opacity:.88;}
+
+    /* PREDICTION RESULT */
+    .pred-box{margin-top:1rem;padding:1.4rem;text-align:center;
+      background:linear-gradient(135deg,rgba(79,142,247,.1),rgba(34,211,160,.07));
+      border:1px solid rgba(79,142,247,.3);border-radius:12px;}
+    .pred-lbl{font-size:11px;color:var(--mut);text-transform:uppercase;letter-spacing:.8px;}
+    .pred-val{font-family:'Syne',sans-serif;font-size:2.3rem;font-weight:800;color:var(--grn);margin-top:5px;}
+    .pred-note{font-size:11px;color:var(--mut);margin-top:5px;}
+
+    /* BADGE */
+    .bdg{display:inline-flex;align-items:center;gap:5px;padding:4px 11px;
+      border-radius:20px;font-size:11.5px;font-weight:600;
+      background:rgba(245,166,35,.1);border:1px solid rgba(245,166,35,.28);
+      color:var(--gld);margin-bottom:.9rem;}
+
+    /* MODEL STATS */
+    .mstat{background:var(--surf2);border:1px solid var(--bdr);border-radius:9px;
+      padding:.9rem;text-align:center;}
+    .mstat-lbl{font-size:10px;color:var(--mut);text-transform:uppercase;letter-spacing:.7px;}
+    .mstat-val{font-family:'Syne',sans-serif;font-size:14px;font-weight:700;margin-top:4px;}
+
+    /* STEPS */
+    .step{display:flex;gap:9px;align-items:center;margin-bottom:.7rem;}
+    .step-n{width:20px;height:20px;border-radius:50%;flex-shrink:0;
+      display:flex;align-items:center;justify-content:center;
+      font-size:10px;font-weight:700;color:#fff;}
+
+    /* DIST PILLS */
+    .dpills{display:flex;gap:.7rem;margin-bottom:.9rem;flex-wrap:wrap;}
+    .dpill{background:var(--surf2);border:1px solid var(--bdr);border-radius:7px;
+      padding:5px 12px;font-size:11.5px;color:var(--mut);}
+    .dpill span{color:var(--gld);font-weight:700;}
+  </style>
+</head>
+<body>
+<aside>
+  <div class="sb-top">
+    <div class="logo-row">
+      <div class="logo-box">PA</div>
+      <span class="logo-name">Pro<span>Analytica</span></span>
+    </div>
+    <div class="nav-lbl">Navigation</div>
+    <div class="nav-links">
+      <a href="/"        class="{% if request.endpoint=='index'      %}active{% endif %}"><span class="ic">📊</span>Dashboard</a>
+      <a href="/stats"   class="{% if request.endpoint=='stats_page' %}active{% endif %}"><span class="ic">📈</span>Statistics</a>
+      <a href="/predict" class="{% if request.endpoint=='predict'    %}active{% endif %}"><span class="ic">🔮</span>Predictor</a>
+    </div>
+  </div>
+  <div class="sb-bot">
+    <div class="team-card">
+      <div class="team-title">ProAnalytica</div>
+      <div class="team-list">👑 Areesha (Leader)<br>Ayesha · Azka · Hadia · Minahil</div>
+    </div>
+  </div>
+</aside>
+<main>{% block content %}{% endblock %}</main>
+</body>
+</html>
