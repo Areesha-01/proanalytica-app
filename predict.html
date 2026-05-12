@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+{% block title %}Predictor{% endblock %}
+{% block content %}
+<div class="topbar">
+  <div class="tb-left">
+    <h1>Job Price Predictor</h1>
+    <p>Enter values — model predicts price instantly & all 3 graphs update automatically</p>
+  </div>
+  <div class="tb-badge">R² Score: <span>{{ r2 }}</span></div>
+</div>
+
+<div class="slbl">Enter Job Details</div>
+<div class="g2" style="align-items:start;">
+
+  <!-- Form -->
+  <div class="card">
+    <div class="ch">Input Variables</div>
+    <div class="bdg">⚡ Linear Regression &nbsp;|&nbsp; R² = {{ r2 }} &nbsp;|&nbsp; 9,081 records trained</div>
+    <form method="POST" action="/predict">
+      <div class="fgrid">
+        <div class="fg">
+          <label>Rate Type</label>
+          <select name="rate_type" required>
+            <option value="fixed"  {{ 'selected' if form_data.get('rate_type','fixed')=='fixed'  else '' }}>Fixed Price</option>
+            <option value="hourly" {{ 'selected' if form_data.get('rate_type','')=='hourly' else '' }}>Hourly Rate</option>
+          </select>
+        </div>
+        <div class="fg">
+          <label>Client Rating (0–5)</label>
+          <input type="number" name="rating" min="0" max="5" step="0.1"
+                 value="{{ form_data.get('rating', 4.5) }}" required/>
+        </div>
+        <div class="fg">
+          <label>Min Price (USD)</label>
+          <input type="number" name="min_price" min="1" max="50000" step="1"
+                 value="{{ form_data.get('min_price', 100) }}" required/>
+        </div>
+        <div class="fg">
+          <label>Max Price (USD)</label>
+          <input type="number" name="max_price" min="1" max="100000" step="1"
+                 value="{{ form_data.get('max_price', 200) }}" required/>
+        </div>
+        <div class="fg" style="grid-column:1/-1;">
+          <label>Client Review Count</label>
+          <input type="number" name="reviews" min="0" max="5000"
+                 value="{{ form_data.get('reviews', 10) }}" required/>
+        </div>
+      </div>
+      <button type="submit" class="btn">🔮 Predict Job Price — Graphs Will Update</button>
+    </form>
+
+    {% if prediction is not none %}
+    <div class="pred-box">
+      <div class="pred-lbl">Predicted Job Price (USD)</div>
+      <div class="pred-val">${{ prediction }}</div>
+      <div class="pred-note">⭐ Star marker shows your input on all graphs below</div>
+    </div>
+    {% else %}
+    <div style="margin-top:1rem;padding:1rem;background:var(--surf2);border-radius:9px;
+      border:1px dashed var(--bdr);text-align:center;color:var(--mut);font-size:13px;">
+      Fill form above → Click Predict → See result here + graphs update
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Right column -->
+  <div style="display:flex;flex-direction:column;gap:1.1rem;">
+    <div class="card">
+      <div class="ch">Model Information</div>
+      <div class="fgrid" style="margin-bottom:0;">
+        <div class="mstat"><div class="mstat-lbl">Algorithm</div><div class="mstat-val" style="color:var(--acc);">Linear Regression</div></div>
+        <div class="mstat"><div class="mstat-lbl">R² Score</div><div class="mstat-val" style="color:var(--grn);">{{ r2 }}</div></div>
+        <div class="mstat"><div class="mstat-lbl">Training Data</div><div class="mstat-val" style="color:var(--gld);">9,081 rows</div></div>
+        <div class="mstat"><div class="mstat-lbl">Features</div><div class="mstat-val" style="color:var(--pur);">5 Variables</div></div>
+      </div>
+      <p style="margin-top:.9rem;font-size:12px;color:var(--mut);line-height:1.6;
+        border-top:1px solid var(--bdr);padding-top:.7rem;">
+        Uses <strong style="color:var(--txt);">log-transform</strong> on prices for better accuracy.
+        Model inputs: Rate Type · Rating · Min/Max Price · Reviews
+      </p>
+    </div>
+
+    <div class="card">
+      <div class="ch">How to Use</div>
+      <div class="step"><span class="step-n" style="background:var(--acc);">1</span><span style="color:var(--mut);font-size:13px;">Choose Fixed or Hourly rate type</span></div>
+      <div class="step"><span class="step-n" style="background:var(--acc);">2</span><span style="color:var(--mut);font-size:13px;">Enter client rating (0–5 stars)</span></div>
+      <div class="step"><span class="step-n" style="background:var(--acc);">3</span><span style="color:var(--mut);font-size:13px;">Enter min price, max price & reviews</span></div>
+      <div class="step"><span class="step-n" style="background:var(--grn);">4</span><span style="color:var(--mut);font-size:13px;">Click Predict — result + ⭐ on graphs!</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- 3 Graphs -->
+<div class="slbl">Regression Visualizations — All 3 graphs update on every prediction</div>
+
+<div class="card g1">
+  <div class="ch">Graph 1 — Scatter Plot: Min Price vs Avg Price + Regression Line</div>
+  <div class="gdesc">Each dot is a real job posting. The green dashed line is the regression line showing the predicted trend. ⭐ Yellow star marks your exact input after prediction.</div>
+  <div id="fig_reg" style="height:300px"></div>
+</div>
+
+<div class="g2">
+  <div class="card">
+    <div class="ch">Graph 2 — Client Rating vs Predicted Price</div>
+    <div class="gdesc">Shows how predicted price changes as client rating increases from 1 to 5. ⭐ Star marks where your rating value falls on this curve.</div>
+    <div id="fig_rat" style="height:280px"></div>
+  </div>
+  <div class="card">
+    <div class="ch">Graph 3 — Min Price vs Predicted Price</div>
+    <div class="gdesc">Shows how predicted price grows as minimum price input increases. ⭐ Star marks your exact min price input on this trend line.</div>
+    <div id="fig_minp" style="height:280px"></div>
+  </div>
+</div>
+
+<script>
+const L={paper_bgcolor:'rgba(0,0,0,0)',plot_bgcolor:'rgba(0,0,0,0)',font:{color:'#eef2ff',family:'Inter'},margin:{t:10,b:50,l:55,r:10}};
+Plotly.newPlot('fig_reg', {{fig_reg|safe}}.data,  Object.assign({},{{fig_reg|safe}}.layout,  L));
+Plotly.newPlot('fig_rat', {{fig_rat|safe}}.data,  Object.assign({},{{fig_rat|safe}}.layout,  L));
+Plotly.newPlot('fig_minp',{{fig_minp|safe}}.data, Object.assign({},{{fig_minp|safe}}.layout, L));
+</script>
+{% endblock %}
